@@ -24,7 +24,7 @@ function createState(isEnd: boolean): IState {
   };
 }
 
-function addEpsilonToTransition(from: IState, to: IState): void {
+function addEpsilonTransition(from: IState, to: IState): void {
   from.epsilonTransition.push(to);
 }
 
@@ -42,7 +42,7 @@ function addTransition(from: IState, to: IState, symbol: string): void {
 function fromEpsilon(): INfa {
   const start = createState(false);
   const end = createState(true);
-  addEpsilonToTransition(start, end);
+  addEpsilonTransition(start, end);
 
   return { start, end };
 }
@@ -67,7 +67,7 @@ function fromSymbol(symbol: string): INfa {
  * @returns Concatenated NFA
  */
 function concat(first: INfa, second: INfa): INfa {
-  addEpsilonToTransition(first.end, second.start);
+  addEpsilonTransition(first.end, second.start);
   first.end.isEnd = false;
 
   return {
@@ -84,14 +84,14 @@ function concat(first: INfa, second: INfa): INfa {
  */
 function union(first: INfa, second: INfa): INfa {
   const start = createState(false);
-  addEpsilonToTransition(start, first.start);
-  addEpsilonToTransition(start, second.start);
+  addEpsilonTransition(start, first.start);
+  addEpsilonTransition(start, second.start);
 
   const end = createState(true);
 
-  addEpsilonToTransition(first.end, end);
+  addEpsilonTransition(first.end, end);
   first.end.isEnd = false;
-  addEpsilonToTransition(second.end, end);
+  addEpsilonTransition(second.end, end);
   second.end.isEnd = false;
 
   return {
@@ -109,11 +109,11 @@ function closure(first: INfa) {
   const start = createState(false);
   const end = createState(true);
 
-  addEpsilonToTransition(start, end);
-  addEpsilonToTransition(start, first.start);
+  addEpsilonTransition(start, end);
+  addEpsilonTransition(start, first.start);
 
-  addEpsilonToTransition(first.end, end);
-  addEpsilonToTransition(first.end, first.start);
+  addEpsilonTransition(first.end, end);
+  addEpsilonTransition(first.end, first.start);
 
   first.end.isEnd = false;
 
@@ -121,4 +121,30 @@ function closure(first: INfa) {
     start,
     end,
   };
+}
+
+function toNFA(postFixExp: string): INfa {
+  if (postFixExp === "") {
+    return fromEpsilon();
+  }
+
+  const stack = [];
+
+  for (const token of postFixExp) {
+    if (token === "*") {
+      stack.push(closure(stack.pop()));
+    } else if (token === "|") {
+      const right = stack.pop();
+      const left = stack.pop();
+      stack.push(union(left, right));
+    } else if (token === ".") {
+      const right = stack.pop();
+      const left = stack.pop();
+      stack.push(concat(left, right));
+    } else {
+      stack.push(fromSymbol(token));
+    }
+  }
+
+  return stack.pop();
 }
