@@ -4,6 +4,11 @@ export interface IState {
   epsilonTransition: IState[];
 }
 
+export interface INfa {
+  start: IState;
+  end: IState;
+}
+
 /**
  * State in Thompson's NFA can either have 
    - a single symbol transition to a state
@@ -34,7 +39,7 @@ function addTransition(from: IState, to: IState, symbol: string): void {
  * Construct an NFA that recognizes only the empty string.
  * @returns start and end state
  */
-function fromEpsilon() {
+function fromEpsilon(): INfa {
   const start = createState(false);
   const end = createState(true);
   addEpsilonToTransition(start, end);
@@ -47,7 +52,7 @@ function fromEpsilon() {
  * @param symbol string
  * @returns
  */
-function fromSymbol(symbol: string) {
+function fromSymbol(symbol: string): INfa {
   const start = createState(false);
   const end = createState(true);
   addTransition(start, end, symbol);
@@ -56,9 +61,19 @@ function fromSymbol(symbol: string) {
 }
 
 /**
- * Concatenating 
+ * Concatenating two NFA's
+ * @param first - Starting NFA
+ * @param second - Ending NFA
+ * @returns Concatenated NFA
  */
-function concat(first,second){
-    addEpsilonToTransition(first.end, second.start)
-    first.end
+function concat(first: INfa, second: INfa): INfa {
+  addEpsilonToTransition(first.end, second.start);
+  first.end.isEnd = false;
+
+  return {
+    start: first.start,
+    end: second.end,
+  };
 }
+
+
