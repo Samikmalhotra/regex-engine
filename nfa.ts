@@ -76,4 +76,49 @@ function concat(first: INfa, second: INfa): INfa {
   };
 }
 
+/**
+ * Union of two NFAs
+ * @param first
+ * @param second
+ * @returns Unionized NFA
+ */
+function union(first: INfa, second: INfa): INfa {
+  const start = createState(false);
+  addEpsilonToTransition(start, first.start);
+  addEpsilonToTransition(start, second.start);
 
+  const end = createState(true);
+
+  addEpsilonToTransition(first.end, end);
+  first.end.isEnd = false;
+  addEpsilonToTransition(second.end, end);
+  second.end.isEnd = false;
+
+  return {
+    start,
+    end,
+  };
+}
+
+/**
+ * Kleene Closure
+ * @param first NFA
+ * @returns NFA
+ */
+function closure(first: INfa) {
+  const start = createState(false);
+  const end = createState(true);
+
+  addEpsilonToTransition(start, end);
+  addEpsilonToTransition(start, first.start);
+
+  addEpsilonToTransition(first.end, end);
+  addEpsilonToTransition(first.end, first.start);
+
+  first.end.isEnd = false;
+
+  return {
+    start,
+    end,
+  };
+}
